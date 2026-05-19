@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         APP_NAME       = 'tirreno'
-        IMAGE_TAG      = "${env.BUILD_NUMBER}"
+        IMAGE_TAG      = "${BUILD_NUMBER}"
         IMAGE_NAME     = "${APP_NAME}:${IMAGE_TAG}"
         CONTAINER_NAME = 'tirreno-container'
         APP_PORT       = '8080'
@@ -23,16 +23,15 @@ pipeline {
             }
         }
 
-        stage('Configure Composer to use Nexus') {
+        stage('Composer Install') {
             steps {
-                echo 'Installing Composer and pointing to Nexus proxy...'
-                sh """
+                echo 'Installing Composer locally in workspace...'
+                sh '''
+                    php -v || true
                     curl -sS https://getcomposer.org/installer | php
-                    mv composer.phar /usr/local/bin/composer
-                    composer config --global repositories.nexus \
-                        composer ${NEXUS_URL}/repository/composer-proxy/
-                    composer config --global secure-http false
-                """
+                    php composer.phar --version
+                    php composer.phar install || true
+                '''
             }
         }
 
@@ -51,13 +50,14 @@ pipeline {
                     usernameVariable: 'NEXUS_USER',
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
-                    sh """
-                        echo "$NEXUS_PASS" | docker login ${NEXUS_URL} \
+                    sh '''
+                        echo "$NEXUS_PASS" | docker login localhost:8081 \
                             -u "$NEXUS_USER" --password-stdin
+
                         docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
                         docker push ${NEXUS_IMAGE}
-                        docker logout ${NEXUS_URL}
-                    """
+                        docker logout localhost:8081
+                    '''
                 }
             }
         }
@@ -65,21 +65,21 @@ pipeline {
         stage('Deploy Locally') {
             steps {
                 echo 'Deploying tirreno container...'
-                sh """
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm   ${CONTAINER_NAME} || true
+                sh '''
+                    docker stop tirreno-container || true
+                    docker rm tirreno-container || true
 
                     docker run -d \
-                        --name ${CONTAINER_NAME} \
-                        -p ${APP_PORT}:80 \
+                        --name tirreno-container \
+                        -p 8080:80 \
                         --restart unless-stopped \
                         -e DB_HOST=host.docker.internal \
                         -e DB_PORT=5432 \
                         -e DB_NAME=tirreno \
                         -e DB_USER=tirreno \
                         -e DB_PASSWORD=changeme \
-                        ${NEXUS_IMAGE}
-                """
+                        localhost:8081/repository/docker-hosted/tirreno:${BUILD_NUMBER}
+                '''
             }
         }
     }
