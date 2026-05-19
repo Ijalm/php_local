@@ -6,7 +6,7 @@ pipeline {
         IMAGE_TAG      = "${BUILD_NUMBER}"
         IMAGE_NAME     = "${APP_NAME}:${IMAGE_TAG}"
         CONTAINER_NAME = 'tirreno-container'
-        APP_PORT       = '8080'
+        APP_PORT       = '9090'
         NEXUS_REGISTRY = 'localhost:8082'
         NEXUS_IMAGE    = "localhost:8082/${APP_NAME}:${IMAGE_TAG}"
     }
