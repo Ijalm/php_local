@@ -2,14 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // Application
         APP_NAME       = 'tirreno'
         IMAGE_TAG      = "${env.BUILD_NUMBER}"
         IMAGE_NAME     = "${APP_NAME}:${IMAGE_TAG}"
         CONTAINER_NAME = 'tirreno-container'
         APP_PORT       = '8080'
 
-        // Nexus
         NEXUS_URL      = 'http://localhost:8081'
         NEXUS_REPO     = 'docker-hosted'
         NEXUS_IMAGE    = "localhost:8081/repository/${NEXUS_REPO}/${APP_NAME}:${IMAGE_TAG}"
@@ -27,8 +25,10 @@ pipeline {
 
         stage('Configure Composer to use Nexus') {
             steps {
-                echo 'Pointing Composer to Nexus proxy...'
+                echo 'Installing Composer and pointing to Nexus proxy...'
                 sh """
+                    curl -sS https://getcomposer.org/installer | php
+                    mv composer.phar /usr/local/bin/composer
                     composer config --global repositories.nexus \
                         composer ${NEXUS_URL}/repository/composer-proxy/
                     composer config --global secure-http false
