@@ -7,7 +7,6 @@ pipeline {
         IMAGE_NAME     = "${APP_NAME}:${IMAGE_TAG}"
         CONTAINER_NAME = 'tirreno-container'
         APP_PORT       = '8080'
-
         NEXUS_URL      = 'http://localhost:8081'
         NEXUS_REPO     = 'docker-hosted'
         NEXUS_IMAGE    = "localhost:8081/repository/${NEXUS_REPO}/${APP_NAME}:${IMAGE_TAG}"
@@ -15,22 +14,36 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('Save Dockerfile') {
             steps {
-                echo 'Cloning tirreno repository...'
+                echo 'Saving Dockerfile before workspace overwrite...'
+                sh 'cp Dockerfile /tmp/tirreno.Dockerfile'
+            }
+        }
+
+        stage('Checkout Tirreno') {
+            steps {
+                echo 'Cloning tirreno source code...'
                 git branch: 'master',
                     url: 'https://github.com/tirrenotechnologies/tirreno.git'
+                sh 'cp /tmp/tirreno.Dockerfile Dockerfile'
             }
         }
 
         stage('Composer Install') {
             steps {
-                echo 'Installing Composer locally in workspace...'
+                echo 'Installing Composer dependencies...'
                 sh '''
                     php -v || true
                     curl -sS https://getcomposer.org/installer | php
                     php composer.phar --version
-                    php composer.phar install || true
+                    php composer.phar install \
+                        --no-dev \
+                        --optimize-autoloader \
+                        --ignore-platform-req=ext-mbstring \
+                        --ignore-platform-req=ext-dom \
+                        --ignore-platform-req=ext-simplexml \
+                        || true
                 '''
             }
         }
@@ -53,7 +66,6 @@ pipeline {
                     sh '''
                         echo "$NEXUS_PASS" | docker login localhost:8081 \
                             -u "$NEXUS_USER" --password-stdin
-
                         docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
                         docker push ${NEXUS_IMAGE}
                         docker logout localhost:8081
@@ -67,8 +79,7 @@ pipeline {
                 echo 'Deploying tirreno container...'
                 sh '''
                     docker stop tirreno-container || true
-                    docker rm tirreno-container || true
-
+                    docker rm   tirreno-container || true
                     docker run -d \
                         --name tirreno-container \
                         -p 8080:80 \
