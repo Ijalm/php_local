@@ -26,7 +26,9 @@ pipeline {
                     url: 'https://github.com/tirrenotechnologies/tirreno.git'
                 sh '''
                     cp $WORKSPACE/../tirreno.Dockerfile Dockerfile
+                    rm -rf k8s
                     cp -r $WORKSPACE/../k8s_backup k8s
+                    ls -la k8s/
                 '''
             }
         }
