@@ -72,28 +72,36 @@ pipeline {
             }
         }
 
-        stage('Deploy Locally') {
-            steps {
-                echo 'Deploying tirreno container from Nexus...'
-                sh """
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm   ${CONTAINER_NAME} || true
-
-                    docker run -d \
-                        --name ${CONTAINER_NAME} \
-                        -p ${APP_PORT}:80 \
-                        --restart unless-stopped \
-                        -e DB_HOST=host.docker.internal \
-                        -e DB_PORT=5432 \
-                        -e DB_NAME=tirreno \
-                        -e DB_USER=tirreno \
-                        -e DB_PASSWORD=changeme \
-                        ${NEXUS_IMAGE}
-                """
-            }
-        }
+  //      stage('Deploy Locally') {
+  //          steps {
+   /             echo 'Deploying tirreno container from Nexus...'
+   //             sh """
+  //                  docker stop ${CONTAINER_NAME} || true
+ //                   docker rm   ${CONTAINER_NAME} || true
+//
+ //                   docker run -d \
+ //                       --name ${CONTAINER_NAME} \
+ //                       -p ${APP_PORT}:80 \
+ //                       --restart unless-stopped \
+ //                       -e DB_HOST=host.docker.internal \
+ //                       -e DB_PORT=5432 \
+ //                       -e DB_NAME=tirreno \
+//                        -e DB_USER=tirreno \
+//                        -e DB_PASSWORD=changeme \
+//                        ${NEXUS_IMAGE}
+//                """
+//            }
+//        }
+  }
+stage('Deploy to Kubernetes') {
+    steps {
+        sh '''
+            kubectl apply -f k8s/deployment.yaml
+            kubectl apply -f k8s/service.yaml
+            kubectl rollout status deployment/php-local
+        '''
     }
-
+}
     post {
         success {
             echo "Deployment successful! Tirreno running at http://localhost:${APP_PORT}"

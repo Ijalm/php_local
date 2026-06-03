@@ -1,0 +1,18 @@
+FROM jenkins/jenkins:lts
+USER root
+
+RUN apt-get update && apt-get install -y \
+    php php-cli php-zip php-xml php-mbstring php-curl \
+    unzip curl docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && chmod +x kubectl \
+    && mv kubectl /usr/local/bin/
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+RUN usermod -aG docker jenkins
+USER jenkins
