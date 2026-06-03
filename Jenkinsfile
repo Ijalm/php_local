@@ -14,8 +14,8 @@ pipeline {
             steps {
                 echo 'Saving Dockerfile and k8s manifests before workspace overwrite...'
                 sh '''
-                    cp Dockerfile /tmp/tirreno.Dockerfile
-                    cp -r k8s /tmp/k8s
+                    cp Dockerfile $WORKSPACE/../tirreno.Dockerfile
+                    cp -r k8s $WORKSPACE/../k8s_backup
                 '''
             }
         }
@@ -25,8 +25,8 @@ pipeline {
                 git branch: 'master',
                     url: 'https://github.com/tirrenotechnologies/tirreno.git'
                 sh '''
-                    cp /tmp/tirreno.Dockerfile Dockerfile
-                    cp -r /tmp/k8s k8s
+                    cp $WORKSPACE/../tirreno.Dockerfile Dockerfile
+                    cp -r $WORKSPACE/../k8s_backup k8s
                 '''
             }
         }
