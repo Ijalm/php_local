@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: php-local
-        image: YOUR_NEXUS_IP:8082/php-local:latest
+        image: 172.17.0.4:8082/php-local:latest
 
         ports:
         - containerPort: 80
