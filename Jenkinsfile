@@ -54,24 +54,44 @@ pipeline {
                 sh "docker build -t ${IMAGE_NAME} ."
             }
         }
+        // stage('Push to Nexus') {
+        //     steps {
+        //         echo "Pushing image to Nexus: ${NEXUS_IMAGE}"
+        //         withCredentials([usernamePassword(
+        //             credentialsId: 'nexus-credentials',
+        //             usernameVariable: 'NEXUS_USER',
+        //             passwordVariable: 'NEXUS_PASS'
+        //         )]) {
+        //             sh """
+        //                 echo "\$NEXUS_PASS" | docker login ${NEXUS_REGISTRY} \
+        //                     -u "\$NEXUS_USER" --password-stdin
+        //                 docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
+        //                 docker push ${NEXUS_IMAGE}
+        //                 docker logout ${NEXUS_REGISTRY}
+        //             """
+        //         }
+        //     }
+        // }
         stage('Push to Nexus') {
-            steps {
-                echo "Pushing image to Nexus: ${NEXUS_IMAGE}"
-                withCredentials([usernamePassword(
-                    credentialsId: 'nexus-credentials',
-                    usernameVariable: 'NEXUS_USER',
-                    passwordVariable: 'NEXUS_PASS'
-                )]) {
-                    sh """
-                        echo "\$NEXUS_PASS" | docker login ${NEXUS_REGISTRY} \
-                            -u "\$NEXUS_USER" --password-stdin
-                        docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
-                        docker push ${NEXUS_IMAGE}
-                        docker logout ${NEXUS_REGISTRY}
-                    """
-                }
-            }
+    steps {
+        echo "Pushing image to Nexus: ${NEXUS_IMAGE}"
+        withCredentials([usernamePassword(
+            credentialsId: 'nexus-credentials',
+            usernameVariable: 'NEXUS_USER',
+            passwordVariable: 'NEXUS_PASS'
+        )]) {
+            sh """
+                echo "\$NEXUS_PASS" | docker login ${NEXUS_REGISTRY} \
+                    -u "\$NEXUS_USER" --password-stdin
+                docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
+                docker tag ${IMAGE_NAME} 192.168.100.37:8082/tirreno:latest
+                docker push ${NEXUS_IMAGE}
+                docker push 192.168.100.37:8082/tirreno:latest
+                docker logout ${NEXUS_REGISTRY}
+            """
         }
+    }
+}
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying to Kubernetes...'
