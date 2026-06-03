@@ -12,6 +12,8 @@ spec:
       labels:
         app: php-local
     spec:
+      imagePullSecrets:
+      - name: nexus-secret
       containers:
       - name: php-local
         image: 192.168.100.37:8082/tirreno:latest
