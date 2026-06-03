@@ -74,7 +74,7 @@ pipeline {
 
   //      stage('Deploy Locally') {
   //          steps {
-   /             echo 'Deploying tirreno container from Nexus...'
+  //             echo 'Deploying tirreno container from Nexus...'
    //             sh """
   //                  docker stop ${CONTAINER_NAME} || true
  //                   docker rm   ${CONTAINER_NAME} || true
