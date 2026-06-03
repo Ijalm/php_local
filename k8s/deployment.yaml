@@ -1,26 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: php-local
-
 spec:
   replicas: 2
-
   selector:
     matchLabels:
       app: php-local
-
   template:
     metadata:
       labels:
         app: php-local
-
     spec:
       containers:
       - name: php-local
         image: 192.168.100.37:8082/tirreno:latest
-
         ports:
         - containerPort: 80
-
