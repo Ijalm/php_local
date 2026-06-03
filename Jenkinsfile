@@ -81,13 +81,16 @@ pipeline {
             passwordVariable: 'NEXUS_PASS'
         )]) {
             sh """
-                echo "\$NEXUS_PASS" | docker login ${NEXUS_REGISTRY} \
+                echo "\$NEXUS_PASS" | docker login localhost:8082 \
+                    -u "\$NEXUS_USER" --password-stdin
+                echo "\$NEXUS_PASS" | docker login 192.168.100.37:8082 \
                     -u "\$NEXUS_USER" --password-stdin
                 docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
                 docker tag ${IMAGE_NAME} 192.168.100.37:8082/tirreno:latest
                 docker push ${NEXUS_IMAGE}
                 docker push 192.168.100.37:8082/tirreno:latest
-                docker logout ${NEXUS_REGISTRY}
+                docker logout localhost:8082
+                docker logout 192.168.100.37:8082
             """
         }
     }
