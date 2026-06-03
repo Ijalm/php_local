@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: php-local
-        image: 192.168.100.37:8082/php-local:latest
+        image: 192.168.100.37:8082/tirreno:latest
 
         ports:
         - containerPort: 80
