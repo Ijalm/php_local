@@ -16,6 +16,6 @@ spec:
       - name: nexus-secret
       containers:
       - name: php-local
-        image: 192.168.100.37:8082/tirreno:latest
+        image: 192.168.100.37:8082/tirreno:8
         ports:
         - containerPort: 80
