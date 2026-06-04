@@ -1,15 +1,11 @@
 apiVersion: v1
 kind: Service
-
 metadata:
-  name: php-local-service
-
+  name: php-app-service
 spec:
   selector:
-    app: php-local
-
+    app: php-app
   ports:
   - port: 80
     targetPort: 80
-
   type: NodePort

@@ -1,21 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: php-local
+  name: php-app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: php-local
+      app: php-app
   template:
     metadata:
       labels:
-        app: php-local
+        app: php-app
     spec:
-      imagePullSecrets:
-      - name: nexus-secret
       containers:
-      - name: php-local
-        image: 192.168.100.37:8082/tirreno:8
+      - name: php-app
+        image: localhost:8082/php-app:1
         ports:
         - containerPort: 80
