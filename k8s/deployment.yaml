@@ -1,19 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: php-app
+  name: php-local
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: php-app
+      app: php-local
   template:
     metadata:
       labels:
-        app: php-app
+        app: php-local
     spec:
+      imagePullSecrets:
+      - name: nexus-secret
       containers:
-      - name: php-app
-        image: localhost:8082/php-app:1
+      - name: php-local
+        image: 192.168.49.2:8082/tirreno:latest
         ports:
         - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "tirreno"
+        - name: DB_USER
+          value: "tirreno"
+        - name: DB_PASSWORD
+          value: "tirreno123"
