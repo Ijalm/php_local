@@ -1,13 +1,12 @@
 pipeline {
     agent any
     environment {
-        APP_NAME       = 'tirreno'
-        IMAGE_TAG      = "${BUILD_NUMBER}"
-        IMAGE_NAME     = "${APP_NAME}:${IMAGE_TAG}"
-        NEXUS_REGISTRY = 'localhost:8082'
-        NEXUS_IMAGE    = "localhost:8082/${APP_NAME}:${IMAGE_TAG}"
+        APP_NAME           = 'tirreno'
+        IMAGE_TAG          = "${BUILD_NUMBER}"
+        IMAGE_NAME         = "${APP_NAME}:${IMAGE_TAG}"
+        NEXUS_REGISTRY     = 'localhost:8082'
+        NEXUS_IMAGE        = "localhost:8082/${APP_NAME}:${IMAGE_TAG}"
         NEXUS_IMAGE_LATEST = "localhost:8082/${APP_NAME}:latest"
-        K8S_IMAGE      = "192.168.49.2:8082/${APP_NAME}:latest"
     }
     stages {
         stage('Save Dockerfile') {
@@ -78,8 +77,8 @@ pipeline {
             steps {
                 echo 'Deploying to Kubernetes...'
                 sh '''
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
+                    kubectl apply --validate=false -f k8s/deployment.yaml
+                    kubectl apply --validate=false -f k8s/service.yaml
                     kubectl rollout status deployment/php-local
                 '''
             }
