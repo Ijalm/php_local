@@ -4,20 +4,34 @@ pipeline {
         APP_NAME           = 'tirreno'
         IMAGE_TAG          = "${BUILD_NUMBER}"
         IMAGE_NAME         = "${APP_NAME}:${IMAGE_TAG}"
-        
-        // Updated to use the Docker bridge IP instead of localhost
         NEXUS_REGISTRY     = '172.17.0.1:8082'
         NEXUS_IMAGE        = "172.17.0.1:8082/${APP_NAME}:${IMAGE_TAG}"
         NEXUS_IMAGE_LATEST = "172.17.0.1:8082/${APP_NAME}:latest"
+        
+        // Forces kubectl to use a clean config file inside the workspace
+        KUBECONFIG         = "${WORKSPACE}/.kubeconfig"
     }
     stages {
+        stage('Setup Kubeconfig') {
+            steps {
+                echo 'Configuring Kubernetes API access parameters...'
+                withCredentials([string(credentialsId: 'jenkins-kubernetes-token', variable: 'K8S_TOKEN')]) {
+                    sh """
+                        kubectl config set-cluster minikube --server=https://192.168.49.2:8443 --insecure-skip-tls-verify=true
+                        kubectl config set-credentials jenkins-admin --token=\${K8S_TOKEN}
+                        kubectl config set-context minikube --cluster=minikube --user=jenkins-admin
+                        kubectl config use-context minikube
+                    """
+                }
+            }
+        }
         stage('Save Dockerfile') {
             steps {
                 echo 'Saving Dockerfile and k8s manifests...'
-                sh '''
-                    cp Dockerfile $WORKSPACE/../tirreno.Dockerfile
-                    cp -r k8s $WORKSPACE/../k8s_backup
-                '''
+                sh """
+                    cp Dockerfile \$WORKSPACE/../tirreno.Dockerfile
+                    cp -r k8s \$WORKSPACE/../k8s_backup
+                """
             }
         }
         stage('Checkout Tirreno') {
@@ -25,12 +39,12 @@ pipeline {
                 echo 'Cloning Tirreno source code...'
                 git branch: 'master',
                     url: 'https://github.com/tirrenotechnologies/tirreno.git'
-                sh '''
-                    cp $WORKSPACE/../tirreno.Dockerfile Dockerfile
+                sh """
+                    cp \$WORKSPACE/../tirreno.Dockerfile Dockerfile
                     rm -rf k8s
-                    cp -r $WORKSPACE/../k8s_backup k8s
+                    cp -r \$WORKSPACE/../k8s_backup k8s
                     ls -la k8s/
-                '''
+                """
             }
         }
         stage('Composer Install') {
