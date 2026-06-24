@@ -4,6 +4,8 @@ pipeline {
     environment {
         REGISTRY = 'docker.io/library'
         IMAGE_NAME = 'tirreno'
+        // Hardcoded standard Docker network bridge gateway to your Fedora host
+        HOST_GATEWAY = '172.17.0.1'
     }
 
     stages {
@@ -18,11 +20,7 @@ pipeline {
                 echo 'Configuring Kubernetes API access parameters...'
                 withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
                     sh '''
-                    # Dynamically discover the default Docker host gateway IP address
-                    HOST_GATEWAY=$(ip route | grep default | awk '{print $3}')
-                    echo "Discovered Host Gateway IP: ${HOST_GATEWAY}"
-                    
-                    # Point cluster connection to the resolved host gateway IP instead
+                    # Use the environment variable for host routing
                     kubectl config set-cluster minikube --server=https://${HOST_GATEWAY}:8443 --insecure-skip-tls-verify=true
                     kubectl config set-credentials jenkins-admin --token=$K8S_TOKEN
                     kubectl config set-context minikube --cluster=minikube --user=jenkins-admin
@@ -77,7 +75,6 @@ pipeline {
             steps {
                 echo 'Deploying to Kubernetes...'
                 sh '''
-                HOST_GATEWAY=$(ip route | grep default | awk '{print $3}')
                 kubectl config set-cluster minikube --server=https://${HOST_GATEWAY}:8443 --insecure-skip-tls-verify=true
                 kubectl set image deployment/php-local php-local=${IMAGE_NAME}:${BUILD_NUMBER} || true
                 kubectl apply --validate=false -f k8s/deployment.yaml
@@ -93,7 +90,6 @@ pipeline {
         failure {
             echo 'Pipeline failed. Check logs above.'
             sh '''
-            HOST_GATEWAY=$(ip route | grep default | awk '{print $3}')
             kubectl config set-cluster minikube --server=https://${HOST_GATEWAY}:8443 --insecure-skip-tls-verify=true
             kubectl rollout undo deployment/php-local || true
             '''
