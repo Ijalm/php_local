@@ -4,9 +4,6 @@ pipeline {
         APP_NAME           = 'tirreno'
         IMAGE_TAG          = "${BUILD_NUMBER}"
         IMAGE_NAME         = "${APP_NAME}:${IMAGE_TAG}"
-        NEXUS_REGISTRY     = '172.17.0.1:8082'
-        NEXUS_IMAGE        = "172.17.0.1:8082/${APP_NAME}:${IMAGE_TAG}"
-        NEXUS_IMAGE_LATEST = "172.17.0.1:8082/${APP_NAME}:latest"
         
         // Forces kubectl to use a clean config file inside the workspace
         KUBECONFIG         = "${WORKSPACE}/.kubeconfig"
@@ -69,36 +66,12 @@ pipeline {
                 sh "docker build -t ${IMAGE_NAME} ."
             }
         }
-        stage('Push to Nexus') {
-            steps {
-                echo "Pushing image to Nexus: ${NEXUS_IMAGE}"
-                withCredentials([usernamePassword(
-                    credentialsId: 'nexus-credentials',
-                    usernameVariable: 'NEXUS_USER',
-                    passwordVariable: 'NEXUS_PASS'
-                )]) {
-                    sh """
-                        echo "\$NEXUS_PASS" | docker login ${NEXUS_REGISTRY} \
-                            -u "\$NEXUS_USER" --password-stdin
-
-                        docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
-                        docker push ${NEXUS_IMAGE}
-
-                        docker tag ${IMAGE_NAME} ${NEXUS_IMAGE_LATEST}
-                        docker push ${NEXUS_IMAGE_LATEST} || \
-                            echo "WARNING: Could not push latest tag. Continuing..."
-
-                        docker logout ${NEXUS_REGISTRY}
-                    """
-                }
-            }
-        }
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying to Kubernetes...'
                 sh """
                     kubectl set image deployment/php-local \
-                        php-local=${NEXUS_IMAGE} --record || true
+                        php-local=${IMAGE_NAME} --record || true
 
                     kubectl apply --validate=false -f k8s/deployment.yaml
                     kubectl apply --validate=false -f k8s/service.yaml
