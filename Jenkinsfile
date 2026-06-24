@@ -4,8 +4,8 @@ pipeline {
     environment {
         REGISTRY = 'docker.io/library'
         IMAGE_NAME = 'tirreno'
-        // Hardcoded standard Docker network bridge gateway to your Fedora host
-        HOST_GATEWAY = '172.17.0.1'
+        // Updated to Minikube's standard internal cluster IP address
+        HOST_GATEWAY = '192.168.49.2'
     }
 
     stages {
@@ -20,7 +20,6 @@ pipeline {
                 echo 'Configuring Kubernetes API access parameters...'
                 withCredentials([string(credentialsId: 'k8s-token', variable: 'K8S_TOKEN')]) {
                     sh '''
-                    # Use the environment variable for host routing
                     kubectl config set-cluster minikube --server=https://${HOST_GATEWAY}:8443 --insecure-skip-tls-verify=true
                     kubectl config set-credentials jenkins-admin --token=$K8S_TOKEN
                     kubectl config set-context minikube --cluster=minikube --user=jenkins-admin
