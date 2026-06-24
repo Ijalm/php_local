@@ -64,10 +64,14 @@ pipeline {
                     sh """
                         echo "\$NEXUS_PASS" | docker login ${NEXUS_REGISTRY} \
                             -u "\$NEXUS_USER" --password-stdin
+
                         docker tag ${IMAGE_NAME} ${NEXUS_IMAGE}
-                        docker tag ${IMAGE_NAME} ${NEXUS_IMAGE_LATEST}
                         docker push ${NEXUS_IMAGE}
-                        docker push ${NEXUS_IMAGE_LATEST}
+
+                        docker tag ${IMAGE_NAME} ${NEXUS_IMAGE_LATEST}
+                        docker push ${NEXUS_IMAGE_LATEST} || \
+                            echo "WARNING: Could not push latest tag. Continuing..."
+
                         docker logout ${NEXUS_REGISTRY}
                     """
                 }
@@ -76,20 +80,25 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying to Kubernetes...'
-                sh '''
+                sh """
+                    kubectl set image deployment/php-local \
+                        php-local=${NEXUS_IMAGE} --record || true
+
                     kubectl apply --validate=false -f k8s/deployment.yaml
                     kubectl apply --validate=false -f k8s/service.yaml
-                    kubectl rollout status deployment/php-local
-                '''
+
+                    kubectl rollout status deployment/php-local --timeout=120s
+                """
             }
         }
     }
     post {
         success {
-            echo "Deployment successful! Tirreno is running."
+            echo "Deployment successful! Tirreno ${IMAGE_TAG} is running."
         }
         failure {
             echo 'Pipeline failed. Check logs above.'
+            sh 'kubectl rollout undo deployment/php-local || true'
         }
         always {
             sh 'docker image prune -f || true'
