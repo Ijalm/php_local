@@ -4,9 +4,11 @@ pipeline {
         APP_NAME           = 'tirreno'
         IMAGE_TAG          = "${BUILD_NUMBER}"
         IMAGE_NAME         = "${APP_NAME}:${IMAGE_TAG}"
-        NEXUS_REGISTRY     = 'localhost:8082'
-        NEXUS_IMAGE        = "localhost:8082/${APP_NAME}:${IMAGE_TAG}"
-        NEXUS_IMAGE_LATEST = "localhost:8082/${APP_NAME}:latest"
+        
+        // Updated to use the Docker bridge IP instead of localhost
+        NEXUS_REGISTRY     = '172.17.0.1:8082'
+        NEXUS_IMAGE        = "172.17.0.1:8082/${APP_NAME}:${IMAGE_TAG}"
+        NEXUS_IMAGE_LATEST = "172.17.0.1:8082/${APP_NAME}:latest"
     }
     stages {
         stage('Save Dockerfile') {
